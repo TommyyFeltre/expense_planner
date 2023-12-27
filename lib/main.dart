@@ -4,7 +4,16 @@ import 'package:expense_planner/widgets/new_transactions.dart';
 import 'package:expense_planner/widgets/transaction_list.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  // options to set the device orientation
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations(
+  //   [DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown
+  //   ]
+  // );
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -58,6 +67,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
+  bool _showChart = false;
+
   void _addTransaction(String title, double amount, DateTime date) {
     final newTransaction = Transaction(
         id: DateTime.now().toString(),
@@ -90,26 +101,63 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final appBar = AppBar(
+      title: const Text('Personal Expenses'),
+      backgroundColor: Theme.of(context).primaryColor,
+      foregroundColor: Colors.white,
+      actions: [
+        IconButton(
+            onPressed: () {
+              _onAddTransaction(context);
+            },
+            icon: const Icon(Icons.add))
+      ],
+    );
+    final transactionListWidget = SizedBox(
+                    height: (MediaQuery.of(context).size.height -
+                            appBar.preferredSize.height -
+                            MediaQuery.of(context).padding.top) *
+                        0.7,
+                    child:
+                        TransactionList(_userTransactions, _deleteTransaction));
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personal Expenses'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-              onPressed: () {
-                _onAddTransaction(context);
-              },
-              icon: const Icon(Icons.add))
-        ],
-      ),
+      appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Chart(_recentTransaction),
-            TransactionList(_userTransactions, _deleteTransaction)
+            if(isLandscape) Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Show Chart'),
+                Switch(
+                    activeColor: Theme.of(context).primaryColor,
+                    value: _showChart,
+                    onChanged: (value) {
+                      setState(() {
+                        _showChart = value;
+                      });
+                    }),
+              ],
+            ),
+            if(!isLandscape) SizedBox(
+                    height: (MediaQuery.of(context).size.height -
+                            appBar.preferredSize.height -
+                            MediaQuery.of(context).padding.top) *
+                        0.3,
+                    child: Chart(_recentTransaction)),
+            if(!isLandscape) transactionListWidget,
+            if(isLandscape) _showChart
+                ? SizedBox(
+                    height: (MediaQuery.of(context).size.height -
+                            appBar.preferredSize.height -
+                            MediaQuery.of(context).padding.top) *
+                        0.7,
+                    child: Chart(_recentTransaction))
+                : transactionListWidget
           ],
         ),
       ),
