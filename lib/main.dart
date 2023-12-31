@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:expense_planner/model/transaction.dart';
 import 'package:expense_planner/widgets/chart.dart';
 import 'package:expense_planner/widgets/new_transactions.dart';
 import 'package:expense_planner/widgets/transaction_list.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -33,6 +36,7 @@ class MyApp extends StatelessWidget {
         ),
         appBarTheme: const AppBarTheme(
             titleTextStyle: TextStyle(
+                color: Colors.white,
                 fontFamily: 'OpenSans',
                 fontSize: 20,
                 fontWeight: FontWeight.bold)),
@@ -102,20 +106,32 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final isLandscape =
-        mediaQuery.orientation == Orientation.landscape;
-    final appBar = AppBar(
-      title: const Text('Personal Expenses'),
-      backgroundColor: Theme.of(context).primaryColor,
-      foregroundColor: Colors.white,
-      actions: [
-        IconButton(
-            onPressed: () {
-              _onAddTransaction(context);
-            },
-            icon: const Icon(Icons.add))
-      ],
-    );
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+          middle: Text('Personal Expenses', style: Theme.of(context).appBarTheme.titleTextStyle,),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () => _onAddTransaction(context),
+                child: const Icon(CupertinoIcons.add, color: Colors.white,),
+              )
+            ],
+          ),
+          backgroundColor: Theme.of(context).primaryColor,
+        )
+        : AppBar(
+            title: const Text('Personal Expenses'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                  onPressed: () => _onAddTransaction(context),
+                  icon: const Icon(Icons.add))
+            ],
+          ) as PreferredSizeWidget;
+
     final transactionListWidget = SizedBox(
         height: (mediaQuery.size.height -
                 appBar.preferredSize.height -
@@ -123,9 +139,8 @@ class _MyHomePageState extends State<MyHomePage> {
             0.7,
         child: TransactionList(_userTransactions, _deleteTransaction));
 
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
+    final appBody = SafeArea(
+      child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -134,8 +149,8 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Show Chart'),
-                  Switch(
+                  Text('Show Chart', style: Theme.of(context).textTheme.titleLarge,),
+                  Switch.adaptive(
                       activeColor: Theme.of(context).primaryColor,
                       value: _showChart,
                       onChanged: (value) {
@@ -165,15 +180,28 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        onPressed: () {
-          _onAddTransaction(context);
-        },
-        child: const Icon(Icons.add),
-      ),
     );
+
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            child: appBody,
+            navigationBar: appBar as ObstructingPreferredSizeWidget,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: appBody,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isIOS
+                ? const SizedBox()
+                : FloatingActionButton(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    onPressed: () {
+                      _onAddTransaction(context);
+                    },
+                    child: const Icon(Icons.add),
+                  ),
+          );
   }
 }
