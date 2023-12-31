@@ -103,24 +103,73 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  List<Widget> _buildLandscapeContent(MediaQueryData mediaQuery,PreferredSizeWidget appBar, Widget transactionListWidget) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Show Chart',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          Switch.adaptive(
+              activeColor: Theme.of(context).primaryColor,
+              value: _showChart,
+              onChanged: (value) {
+                setState(() {
+                  _showChart = value;
+                });
+              }),
+        ],
+      ),
+      _showChart
+      ? SizedBox(
+          height: (mediaQuery.size.height -
+                  appBar.preferredSize.height -
+                  mediaQuery.padding.top) *
+              0.7,
+          child: Chart(_recentTransaction))
+      : transactionListWidget
+    ];
+  }
+
+  List<Widget> _buildPortraitContent(MediaQueryData mediaQuery,PreferredSizeWidget appBar, Widget transactionListWidget) {
+    return [
+      SizedBox(
+        height: (mediaQuery.size.height -
+                appBar.preferredSize.height -
+                mediaQuery.padding.top) *
+            0.3,
+        child: Chart(_recentTransaction)
+      ),
+      transactionListWidget
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
     final appBar = Platform.isIOS
         ? CupertinoNavigationBar(
-          middle: Text('Personal Expenses', style: Theme.of(context).appBarTheme.titleTextStyle,),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () => _onAddTransaction(context),
-                child: const Icon(CupertinoIcons.add, color: Colors.white,),
-              )
-            ],
-          ),
-          backgroundColor: Theme.of(context).primaryColor,
-        )
+            middle: Text(
+              'Personal Expenses',
+              style: Theme.of(context).appBarTheme.titleTextStyle,
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => _onAddTransaction(context),
+                  child: const Icon(
+                    CupertinoIcons.add,
+                    color: Colors.white,
+                  ),
+                )
+              ],
+            ),
+            backgroundColor: Theme.of(context).primaryColor,
+          )
         : AppBar(
             title: const Text('Personal Expenses'),
             backgroundColor: Theme.of(context).primaryColor,
@@ -145,38 +194,8 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (isLandscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Show Chart', style: Theme.of(context).textTheme.titleLarge,),
-                  Switch.adaptive(
-                      activeColor: Theme.of(context).primaryColor,
-                      value: _showChart,
-                      onChanged: (value) {
-                        setState(() {
-                          _showChart = value;
-                        });
-                      }),
-                ],
-              ),
-            if (!isLandscape)
-              SizedBox(
-                  height: (mediaQuery.size.height -
-                          appBar.preferredSize.height -
-                          mediaQuery.padding.top) *
-                      0.3,
-                  child: Chart(_recentTransaction)),
-            if (!isLandscape) transactionListWidget,
-            if (isLandscape)
-              _showChart
-                  ? SizedBox(
-                      height: (mediaQuery.size.height -
-                              appBar.preferredSize.height -
-                              mediaQuery.padding.top) *
-                          0.7,
-                      child: Chart(_recentTransaction))
-                  : transactionListWidget
+            if (isLandscape) ..._buildLandscapeContent(mediaQuery, appBar, transactionListWidget),
+            if (!isLandscape) ..._buildPortraitContent(mediaQuery, appBar, transactionListWidget),    
           ],
         ),
       ),
