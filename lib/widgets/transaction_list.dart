@@ -28,7 +28,7 @@ class TransactionList extends StatelessWidget {
           })
         : ListView.builder(
             itemBuilder: (context, index) {
-              return TransactionItem(transaction: transactions[index], mediaQuery: mediaQuery, deleteTransaction: deleteTransaction);
+              return TransactionItem(transaction: transactions[index], mediaQuery: mediaQuery, deleteTransaction: deleteTransaction, key: ValueKey(transactions[index].id),);
             },
             itemCount: transactions.length,
           );
